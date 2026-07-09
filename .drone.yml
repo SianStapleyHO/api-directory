@@ -1,0 +1,15 @@
+pipeline:
+
+  deploy-to-dev:
+    image: quay.io/ukhomeofficedigital/kd:v1.14.0
+    secrets:
+      - kube_token_acp_notprod
+    environment:
+      - DRONE_DEPLOY_TO=acp-notprod
+    commands:
+      - apk update
+      - apk add curl
+      - bin/deploy.sh
+    when:
+      event: push
+      branch: master

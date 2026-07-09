@@ -1,0 +1,55 @@
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  annotations:
+    downscaler/uptime: Mon-Fri 07:00-20:00 Europe/London
+  name: {{ .NAME }}
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: {{ .NAME }}
+        service: dapperdox
+    spec:
+      volumes:
+        - name: dapper-ref-data
+          emptyDir: {}
+        - name: dapper-content
+          emptyDir: {}
+        - name: dapper-content2
+          emptyDir: {}
+      containers:
+        - name: git-sync-ref-data
+          image: quay.io/ukhomeofficedigital/git-sync:latest
+          imagePullPolicy: Always
+          securityContext:
+            runAsUser: 65533
+          env:
+            - name: GIT_SYNC_REPO
+              value: https://github.com/UKHomeOffice/reference-data-governance-api-spec.git
+            - name: GIT_SYNC_DEST
+              value: content
+            - name: GIT_SYNC_BRANCH
+              value: master
+            - name: GIT_SYNC_DEPTH
+              value: "1"
+          volumeMounts:
+            - name: dapper-ref-data
+              mountPath: /tmp/git
+        - name: dapperdox
+          image: quay.io/ukhomeofficedigital/dapperdox:latest
+          imagePullPolicy: Always
+          securityContext:
+            runAsNonRoot: true
+          ports:
+            - containerPort: {{ .PORT }}
+          env:
+            - name: SPEC_FILENAME
+              value: "rd/swagger.yml"
+          volumeMounts:
+            - name: dapper-ref-data
+              mountPath: /specs/rd
+      securityContext:
+        fsGroup: 65533
