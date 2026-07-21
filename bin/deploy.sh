@@ -16,6 +16,10 @@ case ${DRONE_DEPLOY_TO} in
     export KUBE_SERVER="https://kube-api-notprod.notprod.acp.homeoffice.gov.uk"
     export KUBE_TOKEN=${KUBE_TOKEN_ACP_NOTPROD}
     ;;
+    'acp-test')
+    export KUBE_SERVER="https://kube-api-test.testing.acp.homeoffice.gov.uk"
+    export KUBE_TOKEN=${KUBE_TOKEN_ACP_TEST}
+    ;;
 esac
 
 echo "--- kube api url: ${KUBE_SERVER}"
