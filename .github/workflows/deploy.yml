@@ -12,7 +12,8 @@ jobs:
     container: quay.io/ukhomeofficedigital/kd:v1.14.0
     env:
       DRONE_DEPLOY_TO: acp-test
-      KUBE_TOKEN_ACP_NOTPROD: ${{ secrets.KUBE_TOKEN_ACP_TEST }}
+      KUBE_TOKEN_ACP_TEST: ${{ secrets.KUBE_TOKEN_ACP_TEST }}
+      KUBE_TOKEN_ACP_NOTPROD: ${{ secrets.KUBE_TOKEN_ACP_NOTPROD }}
 
     steps:
       - name: Checkout repo
