@@ -9,9 +9,19 @@ jobs:
   deploy:
     name: "Deploy to Cluster"
     runs-on: ubuntu-latest
+    container: quay.io/ukhomeofficedigital/kd:v1.14.0
+    env:
+      DRONE_DEPLOY_TO: acp-test
+      KUBE_TOKEN_ACP_NOTPROD: ${{ secrets.KUBE_TOKEN_ACP_TEST }}
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v7
+      - name: Update and add curl
+        run: |
+          apk update
+          apk add curl
+      - name: Run deployment script
+        run: echo "Hello, world!"
 
   
