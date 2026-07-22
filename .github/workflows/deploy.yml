@@ -23,6 +23,6 @@ jobs:
           apk update
           apk add curl
       - name: Run deployment script
-        run: echo "Hello, world!"
+        run: bin/deploy.sh
 
   
