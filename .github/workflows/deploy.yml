@@ -10,9 +10,11 @@ jobs:
     name: "Scan for deprecated k8s APIs"
     runs-on: ubuntu--latest
     steps:
+      - name: Checkout repo
+        uses: actions/checkout@v7
       - name: Download Pluto
         uses: FairwindsOps/pluto/github-action@master
-      - name: PLuto scan for deprecates k8s APIs
+      - name: Pluto scan for deprecated k8s APIs
         run: |
           pluto detect-files \
             -d manifests \
