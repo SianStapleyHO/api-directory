@@ -18,10 +18,21 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v7
+
       - name: Update and add curl
         run: |
           apk update
           apk add curl
+
+      - name: Download Pluto
+        uses: FairwindsOps/pluto/github-action@master
+
+      - name: PLuto scan for deprecates k8s APIs
+        run: |
+          pluto detect-files \
+            -d manifests \
+            --target-versions k8s=v1.20.15
+
       - name: Run deployment script
         run: bin/deploy.sh
 
