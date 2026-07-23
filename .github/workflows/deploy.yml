@@ -6,6 +6,18 @@ on:
       - main
 
 jobs:
+  scan:
+    name: "Scan for deprecated k8s APIs"
+    runs-on: ubuntu--latest
+    steps:
+      - name: Download Pluto
+        uses: FairwindsOps/pluto/github-action@master
+      - name: PLuto scan for deprecates k8s APIs
+        run: |
+          pluto detect-files \
+            -d manifests \
+            --target-versions k8s=v1.20.15
+  
   deploy:
     name: "Deploy to Cluster"
     runs-on: ubuntu-latest
@@ -14,25 +26,13 @@ jobs:
       DRONE_DEPLOY_TO: acp-test
       KUBE_TOKEN_ACP_TEST: ${{ secrets.KUBE_TOKEN_ACP_TEST }}
       KUBE_TOKEN_ACP_NOTPROD: ${{ secrets.KUBE_TOKEN_ACP_NOTPROD }}
-
     steps:
       - name: Checkout repo
         uses: actions/checkout@v7
-
       - name: Update and add curl
         run: |
           apk update
           apk add curl
-
-      - name: Download Pluto
-        uses: FairwindsOps/pluto/github-action@master
-
-      - name: PLuto scan for deprecates k8s APIs
-        run: |
-          pluto detect-files \
-            -d manifests \
-            --target-versions k8s=v1.20.15
-
       - name: Run deployment script
         run: bin/deploy.sh
 
