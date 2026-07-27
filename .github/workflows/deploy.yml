@@ -41,7 +41,7 @@ jobs:
     name: "Deploy to cluster"
     runs-on: ubuntu-latest
     container: quay.io/ukhomeofficedigital/kd:v1.21.14
-    needs: scan
+    needs: k8s_api_scan
     env:
       DRONE_DEPLOY_TO: acp-test
       KUBE_TOKEN_ACP_TEST: ${{ secrets.KUBE_TOKEN_ACP_TEST }}
