@@ -6,7 +6,25 @@ on:
       - main
 
 jobs:
-  scan:
+  image_scan:
+    name: "Trivy SAST scan"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Scan dapperdox image
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: 'quay.io/ukhomeofficedigital/dapperdox:latest'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+      - name: Scan Git Sync image
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: 'quay.io/ukhomeofficedigital/git-sync:latest'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+          skip-setup-trivy: true
+
+  k8s_api_scan:
     name: "Scan for deprecated k8s APIs"
     runs-on: ubuntu-latest
     env:
