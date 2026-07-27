@@ -9,13 +9,15 @@ jobs:
   scan:
     name: "Scan for deprecated k8s APIs"
     runs-on: ubuntu-latest
+    env:
+      K8S_SERVER_VERSION: 1.20.15
     steps:
       - name: Checkout repo
         uses: actions/checkout@v7
       - name: Download Pluto
         uses: FairwindsOps/pluto/github-action@master
       - name: Pluto scan for deprecated k8s APIs
-        run: pluto detect-files -d kube --target-versions k8s=v1.20.15
+        run: pluto detect-files -d kube --target-versions k8s=v$K8S_SERVER_VERSION
   
   deploy:
     name: "Deploy to cluster"
@@ -35,5 +37,3 @@ jobs:
           apk add curl
       - name: Run deployment script
         run: bin/deploy.sh
-
-  
