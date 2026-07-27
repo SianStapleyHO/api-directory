@@ -1,4 +1,4 @@
-name: "Deploy to Cluster"
+name: "Scan nad Deploy"
 
 on: 
   push:
