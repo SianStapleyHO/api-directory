@@ -1,0 +1,27 @@
+
+name: "Deploy"
+
+on: 
+  push:
+    branches: 
+      - main
+
+jobs:
+  deploy:
+    name: "Deploy to cluster"
+    runs-on: ubuntu-latest
+    container: quay.io/ukhomeofficedigital/kd:v1.21.14
+    needs: k8s_api_scan
+    env:
+      DRONE_DEPLOY_TO: acp-test
+      KUBE_TOKEN_ACP_TEST: ${{ secrets.KUBE_TOKEN_ACP_TEST }}
+      KUBE_TOKEN_ACP_NOTPROD: ${{ secrets.KUBE_TOKEN_ACP_NOTPROD }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v7
+      - name: Update and add curl
+        run: |
+          apk update
+          apk add curl
+      - name: Run deployment script
+        run: bin/deploy.sh

@@ -1,0 +1,80 @@
+name: "Trivy repo and asset scan"
+
+on: 
+  workflow_dispatch
+
+env:
+  # Docker
+  SCAN_IMAGES: 'true'
+  # K8s
+  SCAN_K8S: 'true'
+  K8S_SERVER_VERSION: 1.20.15
+  K8S_DIR: './kube'
+  # TF
+  SCAN_TF: 'false'
+  TF_DIR: ''
+
+
+jobs:
+  repo-scan:
+    name: "Repo scan"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+      
+      - name: Scan repository
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
+        with:
+          scan-type: "fs"
+          scan-ref: .
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+      
+      - name: Scan k8s manifests
+        if: env.SCAN_K8S == 'true'
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
+        env:
+          TRIVY_K8S_VERSION: ${{ env.K8S_SERVER_VERSION }}
+          TRIVY_HELM_KUBE_VERSION: ${{ env.K8S_SERVER_VERSION }}
+          TRIVY_HELM_SET_STRING: "NAME=api-directory"
+          TRIVY_HELM_SET: "PORT=3123"
+        with: 
+          scan-type: "config"
+          scan-ref: ${{ env.K8S_DIR }}
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+          skip-setup-trivy: true
+      
+      - name: Scan TF config
+        if: env.SCAN_TF == 'true'
+        uses: aquasecurity/trivy-action@v0.36.0
+        with: 
+          scan-type: "config"
+          scan-ref: ${{ env.TF_DIR }}
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+          skip-setup-trivy: true     
+  
+  image_scan:
+    name: "Image scan"
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [
+          'quay.io/ukhomeofficedigital/dapperdox:latest',
+          'quay.io/ukhomeofficedigital/git-sync:latest'
+        ]
+      fail-fast: false
+      max-parallel: 2
+    steps:
+      - name: Scan ${{ matrix.target }}
+        if: env.SCAN_IMAGES == 'true'
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
+        with:
+          image-ref: ${{ matrix.target }}
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+
+
+  
