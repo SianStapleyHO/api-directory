@@ -92,11 +92,11 @@ jobs:
               "$f" > ".pluto-render/$(basename "$f")"
           done
       - name: Download Pluto
-        if: env.SCAN_KD = 'true'
+        if: env.SCAN_KD == 'true'
         uses: FairwindsOps/pluto/github-action@master
       - name: Scan KD Manifests
         continue-on-error: true
-        if: env.SCAN_KD = 'true'
+        if: env.SCAN_KD == 'true'
         run: pluto detect-files -d .pluto-render --target-versions k8s=v$K8S_SERVER_VERSION
       
       - name: Scan TF config
