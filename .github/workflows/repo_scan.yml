@@ -93,11 +93,25 @@ jobs:
           done
       - name: Download Pluto
         if: env.SCAN_KD == 'true'
-        uses: FairwindsOps/pluto/github-action@master
+        uses: FairwindsOps/pluto/github-action@366e3d0ebb136f41eadc96ff7a1281d396e1d58b
       - name: Scan KD Manifests
         continue-on-error: true
         if: env.SCAN_KD == 'true'
-        run: pluto detect-files -d .pluto-render --target-versions k8s=v$K8S_SERVER_VERSION
+        run: pluto detect-files -d .pluto-render -t k8s=v$K8S_SERVER_VERSION -owide > kd_scan.txt
+      - name: Publish KD scan results
+        if: env.SCAN_KD == 'true'
+        run: |
+          if [[ -s kd_scan.txt ]]; then
+            {
+              echo "### TF Scan Output"
+              echo "<details><summary>Click to expand</summary>"
+              echo ""
+              echo '```'
+              cat kd_scan.txt
+              echo '```'
+              echo "</details>"
+            } >> $GITHUB_STEP_SUMMARY
+          fi
       
       - name: Scan TF config
         if: env.SCAN_TF == 'true'
