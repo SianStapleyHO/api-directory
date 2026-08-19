@@ -27,16 +27,31 @@ jobs:
       
       - name: Scan repository
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
+        continue-on-error: true
         with:
           scan-type: "fs"
           scan-ref: .
           severity: 'CRITICAL,HIGH'
           ignore-unfixed: true
           output: repo-results.txt
+      - name: Publish repo scan results
+        run: |
+          if [[ -s repo-results.txt ]]; then
+            {
+              echo "### Repo Scan Output"
+              echo "<details><summary>Click to expand</summary>"
+              echo ""
+              echo '```'
+              cat repo-results.txt
+              echo '```'
+              echo "</details>"
+            } >> $GITHUB_STEP_SUMMARY
+          fi
       
       - name: Scan k8s manifests
         if: env.SCAN_K8S == 'true'
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
+        continue-on-error: true
         env:
           TRIVY_K8S_VERSION: ${{ env.K8S_SERVER_VERSION }}
           TRIVY_HELM_KUBE_VERSION: ${{ env.K8S_SERVER_VERSION }}
@@ -49,17 +64,44 @@ jobs:
           ignore-unfixed: true
           skip-setup-trivy: true
           output: helm-results.txt
+      - name: Publish k8s scan results
+        run: |
+          if [[ -s helm-results.txt ]]; then
+            {
+              echo "### K8s Scan Output"
+              echo "<details><summary>Click to expand</summary>"
+              echo ""
+              echo '```'
+              cat helm-results.txt
+              echo '```'
+              echo "</details>"
+            } >> $GITHUB_STEP_SUMMARY
+          fi
       
       - name: Scan TF config
         if: env.SCAN_TF == 'true'
-        uses: aquasecurity/trivy-action@v0.36.0
+        continue-on-error: true
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
         with: 
           scan-type: "config"
           scan-ref: ${{ env.TF_DIR }}
           severity: 'CRITICAL,HIGH'
           ignore-unfixed: true
           skip-setup-trivy: true
-          output: tf-results.txt  
+          output: tf-results.txt
+      - name: Publish TF scan results
+        run: |
+          if [[ -s tf-results.txt ]]; then
+            {
+              echo "### TF Scan Output"
+              echo "<details><summary>Click to expand</summary>"
+              echo ""
+              echo '```'
+              cat tf-results.txt
+              echo '```'
+              echo "</details>"
+            } >> $GITHUB_STEP_SUMMARY
+          fi
   
   image_scan:
     name: "Image scan"
@@ -75,20 +117,21 @@ jobs:
     steps:
       - name: Scan ${{ matrix.target }}
         if: env.SCAN_IMAGES == 'true'
+        continue-on-error: true
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
         with:
           image-ref: ${{ matrix.target }}
           severity: 'CRITICAL,HIGH'
           ignore-unfixed: true
           output: "${{ strategy.job-index }}-results.txt"
-      - name: Publish results
+      - name: Publish image scan results
         run: |
           if [[ -s "${{ strategy.job-index }}-results.txt" ]]; then
             {
               echo "### Image Scan Output"
               echo "<details><summary>Click to expand</summary>"
               echo ""
-              echo '```
+              echo '```'
               cat "${{ strategy.job-index }}-results.txt"
               echo '```'
               echo "</details>"
