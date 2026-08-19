@@ -97,7 +97,9 @@ jobs:
       - name: Scan KD Manifests
         continue-on-error: true
         if: env.SCAN_KD == 'true'
-        run: pluto detect-files -d .pluto-render -t k8s=v$K8S_SERVER_VERSION -owide > kd_scan.txt
+        run: |
+          pluto detect-files -d .pluto-render -t k8s=v$K8S_SERVER_VERSION -o wide \
+          --ignore-deprecations --ignore-removals > kd_scan.txt
       - name: Publish KD scan results
         if: env.SCAN_KD == 'true'
         run: |
