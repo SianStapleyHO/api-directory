@@ -14,7 +14,6 @@ env:
   SCAN_TF: 'false'
   TF_DIR: ''
 
-
 jobs:
   repo-scan:
     name: "Repo scan"
@@ -75,6 +74,3 @@ jobs:
           image-ref: ${{ matrix.target }}
           severity: 'CRITICAL,HIGH'
           ignore-unfixed: true
-
-
-  
