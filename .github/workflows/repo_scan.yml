@@ -1,0 +1,175 @@
+name: "Repo and asset scan"
+
+on: 
+  workflow_dispatch
+
+env:
+  K8S_SERVER_VERSION: 1.20.15
+  K8S_DIR: './kube'
+  TF_DIR: ''
+  # Docker
+  SCAN_IMAGES: 'true'
+  # Helm Charts
+  SCAN_HELM: 'false'
+  # KD Manifests
+  SCAN_KD: 'true'
+  # TF
+  SCAN_TF: 'false'
+  
+jobs:
+  repo-scan:
+    name: "Repository Scan"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+      
+      - name: Scan Repository
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
+        continue-on-error: true
+        with:
+          scan-type: "fs"
+          scan-ref: .
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+          output: repo-results.txt
+      - name: Publish repo scan results
+        run: |
+          if [[ -s repo-results.txt ]]; then
+            {
+              echo "### Repo Scan Output"
+              echo "<details><summary>Click to expand</summary>"
+              echo ""
+              echo '```'
+              cat repo-results.txt
+              echo '```'
+              echo "</details>"
+            } >> $GITHUB_STEP_SUMMARY
+          fi
+      
+      - name: Scan Helm Chart
+        if: env.SCAN_HELM == 'true'
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
+        continue-on-error: true
+        env:
+          TRIVY_K8S_VERSION: ${{ env.K8S_SERVER_VERSION }}
+          TRIVY_HELM_KUBE_VERSION: ${{ env.K8S_SERVER_VERSION }}
+          TRIVY_HELM_SET_STRING: "NAME=api-directory"
+          TRIVY_HELM_SET: "PORT=3123"
+        with: 
+          scan-type: "config"
+          scan-ref: ${{ env.K8S_DIR }}
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+          skip-setup-trivy: true
+          output: helm-results.txt
+      - name: Publish Helm scan results
+        if: env.SCAN_HELM == 'true'
+        run: |
+          if [[ -s helm-results.txt ]]; then
+            {
+              echo "### Helm Scan Output"
+              echo "<details><summary>Click to expand</summary>"
+              echo ""
+              echo '```'
+              cat helm-results.txt
+              echo '```'
+              echo "</details>"
+            } >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Render KD Manifests
+        if: env.SCAN_KD == 'true'
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          mkdir -p .pluto-render
+          for f in ${{ env.K8S_DIR }}/*.y*l; do
+            sed -E 's/\{\{ *\.[A-Za-z_][A-Za-z0-9_]* *\}\}/placeholder/g' \
+              "$f" > ".pluto-render/$(basename "$f")"
+          done
+      - name: Download Pluto
+        if: env.SCAN_KD == 'true'
+        uses: FairwindsOps/pluto/github-action@366e3d0ebb136f41eadc96ff7a1281d396e1d58b
+      - name: Scan KD Manifests
+        continue-on-error: true
+        if: env.SCAN_KD == 'true'
+        run: |
+          pluto detect-files -d .pluto-render -t k8s=v$K8S_SERVER_VERSION -o wide \
+          --ignore-deprecations --ignore-removals > kd_scan.txt
+      - name: Publish KD scan results
+        if: env.SCAN_KD == 'true'
+        run: |
+          if [[ -s kd_scan.txt ]]; then
+            {
+              echo "### KD Scan Output"
+              echo "<details><summary>Click to expand</summary>"
+              echo ""
+              echo '```'
+              echo "K8s version = ${K8S_SERVER_VERSION}"
+              cat kd_scan.txt
+              echo '```'
+              echo "</details>"
+            } >> $GITHUB_STEP_SUMMARY
+          fi
+      
+      - name: Scan TF Config
+        if: env.SCAN_TF == 'true'
+        continue-on-error: true
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
+        with: 
+          scan-type: "config"
+          scan-ref: ${{ env.TF_DIR }}
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+          skip-setup-trivy: true
+          output: tf-results.txt
+      - name: Publish TF scan results
+        if: env.SCAN_TF == 'true'
+        run: |
+          if [[ -s tf-results.txt ]]; then
+            {
+              echo "### TF Scan Output"
+              echo "<details><summary>Click to expand</summary>"
+              echo ""
+              echo '```'
+              cat tf-results.txt
+              echo '```'
+              echo "</details>"
+            } >> $GITHUB_STEP_SUMMARY
+          fi
+  
+  image_scan:
+    name: "Image Scan"
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [
+          'quay.io/ukhomeofficedigital/dapperdox:latest',
+          'quay.io/ukhomeofficedigital/git-sync:latest'
+        ]
+      fail-fast: false
+      max-parallel: 2
+    steps:
+      - name: Scan ${{ matrix.target }}
+        if: env.SCAN_IMAGES == 'true'
+        continue-on-error: true
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
+        with:
+          image-ref: ${{ matrix.target }}
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+          output: "${{ strategy.job-index }}-results.txt"
+      - name: Publish Image Scan Results
+        run: |
+          if [[ -s "${{ strategy.job-index }}-results.txt" ]]; then
+            {
+              echo "### Image Scan Output"
+              echo "<details><summary>Click to expand</summary>"
+              echo ""
+              echo '```'
+              cat "${{ strategy.job-index }}-results.txt"
+              echo '```'
+              echo "</details>"
+            } >> $GITHUB_STEP_SUMMARY
+          fi
