@@ -81,3 +81,16 @@ jobs:
           severity: 'CRITICAL,HIGH'
           ignore-unfixed: true
           output: "${{ strategy.job-index }}-results.txt"
+      - name: Publish results
+        run: |
+          if [[ -s "${{ strategy.job-index }}-results.txt" ]]; then
+            {
+              echo "### Image Scan Output"
+              echo "<details><summary>Click to expand</summary>"
+              echo ""
+              echo '```
+              cat "${{ strategy.job-index }}-results.txt"
+              echo '```'
+              echo "</details>"
+            } >> $GITHUB_STEP_SUMMARY
+          fi
