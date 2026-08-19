@@ -1,7 +1,10 @@
 name: "Trivy repo and asset scan"
 
 on: 
-  workflow_dispatch
+  workflow_dispatch:
+  push:
+    branches:
+      - trivy-refactor
 
 env:
   # Docker
