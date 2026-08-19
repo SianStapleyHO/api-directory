@@ -7,16 +7,18 @@ on:
       - trivy-refactor
 
 env:
-  # Docker
-  SCAN_IMAGES: 'true'
-  # K8s
-  SCAN_K8S: 'true'
   K8S_SERVER_VERSION: 1.20.15
   K8S_DIR: './kube'
+  TF_DIR: ''
+  # Docker
+  SCAN_IMAGES: 'true'
+  # Helm Charts
+  SCAN_HELM: 'false'
+  # KD Manifests
+  SCAN_KD: 'true'
   # TF
   SCAN_TF: 'false'
-  TF_DIR: ''
-
+  
 jobs:
   repo-scan:
     name: "Repo scan"
@@ -48,8 +50,8 @@ jobs:
             } >> $GITHUB_STEP_SUMMARY
           fi
       
-      - name: Scan k8s manifests
-        if: env.SCAN_K8S == 'true'
+      - name: Scan Helm charts
+        if: env.SCAN_HELM == 'true'
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
         continue-on-error: true
         env:
@@ -64,11 +66,12 @@ jobs:
           ignore-unfixed: true
           skip-setup-trivy: true
           output: helm-results.txt
-      - name: Publish k8s scan results
+      - name: Publish Helm scan results
+        if: env.SCAN_HELM == 'true'
         run: |
           if [[ -s helm-results.txt ]]; then
             {
-              echo "### K8s Scan Output"
+              echo "### Helm Scan Output"
               echo "<details><summary>Click to expand</summary>"
               echo ""
               echo '```'
@@ -77,6 +80,24 @@ jobs:
               echo "</details>"
             } >> $GITHUB_STEP_SUMMARY
           fi
+
+      - name: Render KD Manifests
+        if: env.SCAN_KD == 'true'
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          mkdir -p .pluto-render
+          for f in ${{ env.K8S_DIR }}/*.y*l; do
+            sed -E 's/\{\{ *\.[A-Za-z_][A-Za-z0-9_]* *\}\}/placeholder/g' \
+              "$f" > ".pluto-render/$(basename "$f")"
+          done
+      - name: Download Pluto
+        if: env.SCAN_KD = 'true'
+        uses: FairwindsOps/pluto/github-action@master
+      - name: Scan KD Manifests
+        continue-on-error: true
+        if: env.SCAN_KD = 'true'
+        run: pluto detect-files -d .pluto-render --target-versions k8s=v$K8S_SERVER_VERSION
       
       - name: Scan TF config
         if: env.SCAN_TF == 'true'
