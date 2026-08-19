@@ -126,6 +126,7 @@ jobs:
           skip-setup-trivy: true
           output: tf-results.txt
       - name: Publish TF scan results
+        if: env.SCAN_TF == 'true'
         run: |
           if [[ -s tf-results.txt ]]; then
             {
