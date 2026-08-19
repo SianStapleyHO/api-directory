@@ -21,13 +21,13 @@ env:
   
 jobs:
   repo-scan:
-    name: "Repo scan"
+    name: "Repository Scan"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
       
-      - name: Scan repository
+      - name: Scan Repository
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
         continue-on-error: true
         with:
@@ -50,7 +50,7 @@ jobs:
             } >> $GITHUB_STEP_SUMMARY
           fi
       
-      - name: Scan Helm charts
+      - name: Scan Helm Chart
         if: env.SCAN_HELM == 'true'
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
         continue-on-error: true
@@ -114,7 +114,7 @@ jobs:
             } >> $GITHUB_STEP_SUMMARY
           fi
       
-      - name: Scan TF config
+      - name: Scan TF Config
         if: env.SCAN_TF == 'true'
         continue-on-error: true
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
@@ -141,7 +141,7 @@ jobs:
           fi
   
   image_scan:
-    name: "Image scan"
+    name: "Image Scan"
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -161,7 +161,7 @@ jobs:
           severity: 'CRITICAL,HIGH'
           ignore-unfixed: true
           output: "${{ strategy.job-index }}-results.txt"
-      - name: Publish image scan results
+      - name: Publish Image Scan Results
         run: |
           if [[ -s "${{ strategy.job-index }}-results.txt" ]]; then
             {
