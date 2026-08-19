@@ -32,6 +32,7 @@ jobs:
           scan-ref: .
           severity: 'CRITICAL,HIGH'
           ignore-unfixed: true
+          output: repo-results.txt
       
       - name: Scan k8s manifests
         if: env.SCAN_K8S == 'true'
@@ -47,6 +48,7 @@ jobs:
           severity: 'CRITICAL,HIGH'
           ignore-unfixed: true
           skip-setup-trivy: true
+          output: helm-results.txt
       
       - name: Scan TF config
         if: env.SCAN_TF == 'true'
@@ -56,7 +58,8 @@ jobs:
           scan-ref: ${{ env.TF_DIR }}
           severity: 'CRITICAL,HIGH'
           ignore-unfixed: true
-          skip-setup-trivy: true     
+          skip-setup-trivy: true
+          output: tf-results.txt  
   
   image_scan:
     name: "Image scan"
@@ -77,3 +80,4 @@ jobs:
           image-ref: ${{ matrix.target }}
           severity: 'CRITICAL,HIGH'
           ignore-unfixed: true
+          output: "${{ strategy.job-index }}-results.txt"
