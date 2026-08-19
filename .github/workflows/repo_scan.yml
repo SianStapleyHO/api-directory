@@ -1,4 +1,4 @@
-name: "Trivy repo and asset scan"
+name: "Repo and asset scan"
 
 on: 
   workflow_dispatch:
