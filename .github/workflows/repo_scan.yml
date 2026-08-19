@@ -1,10 +1,7 @@
 name: "Repo and asset scan"
 
 on: 
-  workflow_dispatch:
-  push:
-    branches:
-      - trivy-refactor
+  workflow_dispatch
 
 env:
   K8S_SERVER_VERSION: 1.20.15
